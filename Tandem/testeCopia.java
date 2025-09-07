@@ -1,7 +1,7 @@
 package Tandem;
 import java.util.*;
 
-public class vMMTandem {
+public class testeCopia {
 
     static int count = 10; // números aleatórios a serem utilizados
 
