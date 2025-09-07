@@ -1,7 +1,7 @@
 package Tandem;
 import java.util.*;
 
-public class umaFila {
+public class testeUmaFila {
 
     static int count = 10; // números aleatórios a serem utilizados
 
