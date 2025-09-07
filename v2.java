@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class simulator {
+public class v2 {
 
     static long previous, a, c, M;
 
@@ -17,16 +17,20 @@ public class simulator {
     static int numServidores;
     static int perdas = 0;
 
-    static int maxAleatorios = 10;
+    static int maxEventos = 10; // agora controlado por contador
     static int usados = 0;
 
+    enum EventType {
+        TIPO_CHEGADA,
+        TIPO_SAIDA
+    }
+
+    // ------------------------------------------------
     static double NextRandom() {
         previous = ((a * previous) + c) % M;
         usados++;
         return (double) previous / M;
     }
-
-    // ------------------------------------------------
 
     static double tempoChegada() {
         return 2 + (5 - 2) * NextRandom();
@@ -37,47 +41,70 @@ public class simulator {
     }
 
     // ------------------------------------------------
+    static EventType NextEvent() {
+        int servidorSaida = -1;
+        double menorSaida = Double.MAX_VALUE;
 
+        for (int i = 0; i < numServidores; i++) {
+            if (proximaSaida[i] < menorSaida) {
+                menorSaida = proximaSaida[i];
+                servidorSaida = i;
+            }
+        }
+
+        if (proximaChegada < menorSaida) {
+            return EventType.TIPO_CHEGADA;
+        } else {
+            return EventType.TIPO_SAIDA;
+        }
+    }
+
+    // ------------------------------------------------
     static void chegada() {
         tempoAtual = proximaChegada;
         atualizaEstatisticas();
 
         if (numClientesNaFila < capacidadeFila) {
-
             numClientesNaFila++;
 
+            // se algum servidor estiver livre, agenda atendimento
             for (int i = 0; i < numServidores; i++) {
                 if (proximaSaida[i] == Double.MAX_VALUE) {
                     proximaSaida[i] = tempoAtual + tempoAtendimento();
                     break;
                 }
             }
-
         } else {
-            perdas++;
+            perdas++; // cliente perdido
         }
 
-        if (usados < maxAleatorios) {
-            proximaChegada = tempoAtual + tempoChegada();
-        } else {
-            proximaChegada = Double.MAX_VALUE;
-        }
+        proximaChegada = tempoAtual + tempoChegada();
     }
 
-    static void saida(int servidor) {
-        tempoAtual = proximaSaida[servidor];
+    static void saida() {
+        // encontra qual servidor disparou a saída
+        int servidorSaida = -1;
+        double menorSaida = Double.MAX_VALUE;
+
+        for (int i = 0; i < numServidores; i++) {
+            if (proximaSaida[i] < menorSaida) {
+                menorSaida = proximaSaida[i];
+                servidorSaida = i;
+            }
+        }
+
+        tempoAtual = proximaSaida[servidorSaida];
         atualizaEstatisticas();
 
         numClientesNaFila--;
         if (numClientesNaFila >= numServidores) {
-            proximaSaida[servidor] = tempoAtual + tempoAtendimento();
+            proximaSaida[servidorSaida] = tempoAtual + tempoAtendimento();
         } else {
-            proximaSaida[servidor] = Double.MAX_VALUE;
+            proximaSaida[servidorSaida] = Double.MAX_VALUE;
         }
     }
 
     // ------------------------------------------------
-
     static void atualizaEstatisticas() {
         double delta = tempoAtual - ultimoEvento;
         if (delta > 0) {
@@ -87,7 +114,6 @@ public class simulator {
     }
 
     // ------------------------------------------------
-
     static void mostraResultados() {
         double tempoTotal = tempoAtual;
         System.out.println("\n--- Resultados da Simulação ---");
@@ -95,7 +121,7 @@ public class simulator {
             if (tempoEmCadaEstado[i] == 0)
                 continue;
             double prob = tempoEmCadaEstado[i] / tempoTotal;
-            System.out.printf("Estado %d clientes: Tempo = %.4f, Probabilidade = %.2f%%\n",
+            System.out.printf("%d: %.4f (%.2f%%)\n",
                     i, tempoEmCadaEstado[i], prob * 100);
         }
         System.out.printf("Tempo total de simulação: %.4f\n", tempoTotal);
@@ -103,25 +129,13 @@ public class simulator {
     }
 
     // ------------------------------------------------
-
     public static void main(String[] args) {
 
-        // Teste do gerador de numeros aleatorios
+        // inicializa gerador
         previous = 1337;
         a = 3344556677L;
         c = 17;
         M = (long) Math.pow(2, 32);
-
-        System.out.println("Random Numbers:");
-        double n;
-        System.out.println("Previous: " + previous + " a: " + a + " c: " + c + " M: " + M);
-        for (int i = 0; i < 10; i++) {
-            n = NextRandom();
-            System.out.println(n);
-        }
-
-        previous = 1337; // reset
-        usados = 0;
 
         Scanner in = new Scanner(System.in);
 
@@ -144,27 +158,19 @@ public class simulator {
             proximaSaida[i] = Double.MAX_VALUE;
         }
 
-        while (usados < maxAleatorios) {
-
-            int servidorSaida = -1;
-            double menorSaida = Double.MAX_VALUE;
-            for (int i = 0; i < numServidores; i++) {
-                if (proximaSaida[i] < menorSaida) {
-                    menorSaida = proximaSaida[i];
-                    servidorSaida = i;
-                }
-            }
-
-            if (proximaChegada < menorSaida) {
+        // laço principal -> segue o material do Moodle
+        int count = maxEventos;
+        while (count > 0) {
+            EventType evento = NextEvent();
+            if (evento == EventType.TIPO_CHEGADA) {
                 chegada();
             } else {
-                saida(servidorSaida);
+                saida();
             }
+            count--;
         }
 
         atualizaEstatisticas();
         mostraResultados();
-
     }
-
 }
