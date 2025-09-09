@@ -3,7 +3,7 @@ import java.util.*;
 
 public class vMMTandem {
 
-    static int count = 10; // números aleatórios a serem utilizados
+    static int count = 100; // números aleatórios a serem utilizados
 
     static long previous = 1337;
     static long a = 3344556677L;
@@ -23,8 +23,6 @@ public class vMMTandem {
     static int FILA1 = 0; // número de clientes na fila1
     static int FILA2 = 0; // número de clientes na fila2
 
-    static int perdas = 0;
-
     static Evento evento;
 
     static escalonador esc = new escalonador();
@@ -33,7 +31,7 @@ public class vMMTandem {
 
     static double NextRandom() {
         previous = ((a * previous) + c) % M;
-        System.out.println((double)previous/M);
+        System.out.println("- "+(double)previous/M);
         count--;
         return (double) previous / M;
     }
@@ -54,7 +52,7 @@ public class vMMTandem {
 
         TempoGlobal = evento.tempo;
         atualizaEstatisticas1();
-        atualizaEstatisticas2();
+        //atualizaEstatisticas2();
 
         if (fila1.Status() < fila1.Capacity()) {
             fila1.In();
@@ -72,7 +70,7 @@ public class vMMTandem {
     static void SAIDA(Evento evento) {
 
         TempoGlobal = evento.tempo;
-        atualizaEstatisticas1();
+        //atualizaEstatisticas1();
         atualizaEstatisticas2();
 
         fila2.Out();
@@ -110,7 +108,7 @@ public class vMMTandem {
 
     static void atualizaEstatisticas1() {
         double delta = TempoGlobal - tempoAnterior1;
-        if (delta > 0 && fila1.Status() >= 0 && fila1.Status() <= fila1.Capacity()) {
+        if (delta > 0 && fila1.Status() >= 0/*  && fila1.Status() <= fila1.Capacity() */) {
             fila1.getTimes()[fila1.Status()] += delta;
         }
         tempoAnterior1 = TempoGlobal;
@@ -118,7 +116,7 @@ public class vMMTandem {
 
     static void atualizaEstatisticas2() {
         double delta = TempoGlobal - tempoAnterior2;
-        if (delta > 0 && fila2.Status() >= 0 && fila2.Status() <= fila2.Capacity()) {
+        if (delta > 0 && fila2.Status() >= 0/*  && fila2.Status() <= fila2.Capacity() */) {
             fila2.getTimes()[fila2.Status()] += delta;
         }
         tempoAnterior2 = TempoGlobal;
@@ -179,7 +177,7 @@ public class vMMTandem {
             System.out.printf("Estado %d clientes: Tempo = %.4f, Probabilidade = %.2f%%\n",
                     i, timesF1[i], prob * 100);
         }
-        System.out.println("Clientes perdidos: " + perdas);
+        System.out.println("Clientes perdidos: " + fila1.getLoss());
         System.out.println("Fila 2:");
         for (int i = 0; i < fila2.Capacity() + 1; i++) {
             double[] timesF2 = fila2.getTimes();
@@ -189,7 +187,7 @@ public class vMMTandem {
             System.out.printf("Estado %d clientes: Tempo = %.4f, Probabilidade = %.2f%%\n",
                     i, timesF2[i], prob * 100);
         }
-        System.out.println("Clientes perdidos: " + perdas);
+        System.out.println("Clientes perdidos: " + fila2.getLoss());
         System.out.printf("Tempo total de simulação: %.4f\n", TempoGlobal);
         
     }

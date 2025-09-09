@@ -35,6 +35,9 @@ public class fila {
     public void Loss() {
         Loss++;
     }
+    public int getLoss() {
+        return Loss;
+    }
     public void In() {
         Customers++;
     }
