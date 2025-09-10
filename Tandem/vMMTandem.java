@@ -5,7 +5,7 @@ import java.math.BigInteger;
 
 public class vMMTandem {
 
-    static int count = 100; // números aleatórios a serem utilizados
+    static int count = 10; // números aleatórios a serem utilizados
 
     static BigInteger previous = BigInteger.valueOf(1337);
     static BigInteger a = BigInteger.valueOf(3344556677L);
@@ -34,7 +34,7 @@ public class vMMTandem {
     static double NextRandom() {
         previous = (a.multiply(previous).add(c)).mod(M);
         double result = previous.doubleValue() / M.doubleValue();
-        System.out.println("- " + Math.abs(result));
+        System.out.println("- " + result);
         count--;
         return result;
     }

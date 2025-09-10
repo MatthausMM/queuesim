@@ -36,7 +36,7 @@ public class vMMTandemBigInt {
 
     static {
         try {
-            writer = new BufferedWriter(new FileWriter("randoms.txt", true)); // true para append
+            writer = new BufferedWriter(new FileWriter("randoms.txt"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -229,7 +229,6 @@ public class vMMTandemBigInt {
         }
         System.out.println("Clientes perdidos: " + fila1.getLoss() + "\n");
         System.out.println("Fila 2: (G/G/" + fila2.Server() + "/" + fila2.Capacity() + ")");
-        System.out.println("Chegada: " + fila2.getMinArrival() + " ... " + fila2.getMaxArrival());
         System.out.println("Serviço: " + fila2.getMinService() + " ... " + fila2.getMaxService());
         for (int i = 0; i < fila2.Capacity() + 1; i++) {
             double[] timesF2 = fila2.getTimes();
