@@ -6,9 +6,9 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class vMMTandemBigInt {
+public class simuladorTandem {
 
-    static int count = 100000; // números aleatórios a serem utilizados
+    static int count = 100000;
 
     static BigInteger previous = BigInteger.valueOf(1337);
     static BigInteger a = BigInteger.valueOf(3344556677L);
@@ -24,9 +24,6 @@ public class vMMTandemBigInt {
 
     static double chegada;
     static double saida;
-
-    static int FILA1 = 0; // número de clientes na fila1
-    static int FILA2 = 0; // número de clientes na fila2
 
     static Evento evento;
 
@@ -46,7 +43,7 @@ public class vMMTandemBigInt {
 
     static double NextRandom() {
         previous = (a.multiply(previous).add(c)).mod(M);
-        double result = Math.abs(previous.doubleValue() / M.doubleValue());
+        double result = previous.doubleValue() / M.doubleValue();
         try {
             writer.write("- " + result + "\n");
             writer.flush();
@@ -241,7 +238,6 @@ public class vMMTandemBigInt {
         System.out.println("Clientes perdidos: " + fila2.getLoss());
         System.out.printf("Tempo total de simulação: %.4f\n", TempoGlobal);
 
-        // Fechar o writer ao final da execução
         try {
             if (writer != null) writer.close();
         } catch (IOException e) {

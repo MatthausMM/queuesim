@@ -14,7 +14,7 @@ public class escalonador {
     }
 
     public Evento prox() {
-        return filaEventos.poll(); // tira o próximo evento na ordem do tempo
+        return filaEventos.poll();
     }
 
     public boolean vazio() {
