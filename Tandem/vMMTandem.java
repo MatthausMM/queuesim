@@ -1,14 +1,16 @@
 package Tandem;
 import java.util.*;
+import java.lang.Math;
+import java.math.BigInteger;
 
 public class vMMTandem {
 
     static int count = 100; // números aleatórios a serem utilizados
 
-    static long previous = 1337;
-    static long a = 3344556677L;
-    static long c = 17;
-    static long M = (long) Math.pow(2, 32);
+    static BigInteger previous = BigInteger.valueOf(1337);
+    static BigInteger a = BigInteger.valueOf(3344556677L);
+    static BigInteger c = BigInteger.valueOf(17);
+    static BigInteger M = BigInteger.valueOf((long) Math.pow(2, 32));
 
     static fila fila1;
     static fila fila2;
@@ -30,10 +32,11 @@ public class vMMTandem {
     // ------------------------------------------------
 
     static double NextRandom() {
-        previous = ((a * previous) + c) % M;
-        System.out.println("- "+(double)previous/M);
+        previous = (a.multiply(previous).add(c)).mod(M);
+        double result = previous.doubleValue() / M.doubleValue();
+        System.out.println("- " + Math.abs(result));
         count--;
-        return (double) previous / M;
+        return result;
     }
 
     // ------------------------------------------------
@@ -52,7 +55,7 @@ public class vMMTandem {
 
         TempoGlobal = evento.tempo;
         atualizaEstatisticas1();
-        //atualizaEstatisticas2();
+        atualizaEstatisticas2();
 
         if (fila1.Status() < fila1.Capacity()) {
             fila1.In();
@@ -70,7 +73,7 @@ public class vMMTandem {
     static void SAIDA(Evento evento) {
 
         TempoGlobal = evento.tempo;
-        //atualizaEstatisticas1();
+        atualizaEstatisticas1();
         atualizaEstatisticas2();
 
         fila2.Out();
