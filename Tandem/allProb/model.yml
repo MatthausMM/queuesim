@@ -1,0 +1,22 @@
+!PARAMETERS
+
+arrivals: 
+   Q1: 2.0
+
+queues: 
+   Q1: 
+      servers: 2
+      capacity: 4
+      minArrival: 2.0
+      maxArrival: 3.0
+      minService: 4.0
+      maxService: 7.0
+   Q2: 
+      servers: 1
+      minService: 4.0
+      maxService: 8.0
+
+network: 
+-  source: Q1
+   target: Q2
+   probability: 0.7
