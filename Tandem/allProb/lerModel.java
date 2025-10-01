@@ -7,6 +7,17 @@ public class lerModel {
     private Map<String, Object> yamlData;
     private Map<String, Integer> filaIndices;
     
+    // Classe auxiliar para armazenar informações de conexão
+    private static class ConnectionInfo {
+        double probability;
+        int targetIndex;
+        
+        ConnectionInfo(double probability, int targetIndex) {
+            this.probability = probability;
+            this.targetIndex = targetIndex;
+        }
+    }
+    
     public lerModel(String filename) throws IOException {
         this.filaIndices = new HashMap<>();
         carregarYaml(filename);
@@ -122,11 +133,7 @@ public class lerModel {
             ((List<Map<String, Object>>) data.get("network")).add(pendingNetworkItem);
         }
         
-        // Debug: Verificar o que foi parseado
-        System.out.println("Debug - Dados parseados:");
-        System.out.println("Arrivals: " + data.get("arrivals"));
-        System.out.println("Queues: " + data.get("queues"));
-        System.out.println("Network: " + data.get("network"));
+        // Debug removido - dados parseados com sucesso
         
         return data;
     }
@@ -177,6 +184,8 @@ public class lerModel {
             
             // Encontrar conexões desta fila na rede
             double totalProb = 0.0;
+            List<ConnectionInfo> connections = new ArrayList<>();
+            
             if (network != null) {
                 for (Map<String, Object> connection : network) {
                     String source = (String) connection.get("source");
@@ -184,14 +193,25 @@ public class lerModel {
                         String target = (String) connection.get("target");
                         double probability = (Double) connection.get("probability");
                         
-                        probsList.add(probability);
+                        int targetIndex;
                         if (filaIndices.containsKey(target)) {
-                            destinosList.add(filaIndices.get(target));
+                            targetIndex = filaIndices.get(target);
                         } else {
-                            destinosList.add(-1); // Saída do sistema
+                            targetIndex = -1; // Saída do sistema
                         }
+                        
+                        connections.add(new ConnectionInfo(probability, targetIndex));
                         totalProb += probability;
                     }
+                }
+                
+                // Ordenar conexões por probabilidade crescente
+                connections.sort((a, b) -> Double.compare(a.probability, b.probability));
+                
+                // Adicionar às listas na ordem correta
+                for (ConnectionInfo conn : connections) {
+                    probsList.add(conn.probability);
+                    destinosList.add(conn.targetIndex);
                 }
             }
             
@@ -210,12 +230,22 @@ public class lerModel {
                                    minService, maxService, probs, destinos);
             filas.add(novaFila);
             
-            System.out.println("Fila " + queueName + " criada: G/G/" + servers + "/" + capacity);
+            if (capacity == 1000000) {
+                // Capacidade infinita
+                System.out.println("Fila " + queueName + " criada: G/G/" + servers);
+            }
+            else System.out.println("Fila " + queueName + " criada: G/G/" + servers + "/" + capacity);
             System.out.println("  Chegada: " + minArrival + " ... " + maxArrival);
             System.out.println("  Serviço: " + minService + " ... " + maxService);
             System.out.print("  Destinos: ");
             for (int i = 0; i < probs.length; i++) {
-                String dest = (destinos[i] == -1) ? "SAIDA" : "Q" + (destinos[i] + 1);
+                String dest;
+                if (destinos[i] == -1) {
+                    dest = "SAIDA";
+                } else {
+                    String nomeDestino = getNomeFilaPorIndice(destinos[i]);
+                    dest = (nomeDestino != null) ? nomeDestino : "Q" + (destinos[i] + 1);
+                }
                 System.out.printf("%s(%.1f%%) ", dest, probs[i] * 100);
             }
             System.out.println();
@@ -231,5 +261,14 @@ public class lerModel {
     
     public int getIndiceFilaPorNome(String nome) {
         return filaIndices.getOrDefault(nome, -1);
+    }
+    
+    public String getNomeFilaPorIndice(int indice) {
+        for (Map.Entry<String, Integer> entry : filaIndices.entrySet()) {
+            if (entry.getValue() == indice) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 }

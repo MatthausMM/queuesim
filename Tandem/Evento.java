@@ -13,5 +13,9 @@ public class Evento {
         this.tipo = tipo;
         this.tempo = tempo;
     }
-    
+
+    @Override
+    public String toString() {
+        return "Evento{" + "tipo=" + tipo + ", tempo=" + tempo + '}';
+    }
 }

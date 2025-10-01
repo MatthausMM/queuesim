@@ -8,9 +8,11 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
-public class copia2 {
+public class vModelProb {
 
-    static int count = 100;
+    static int count = 100000;
+
+    static boolean logs = false;
 
     static BigInteger previous = BigInteger.valueOf(1337);
     static BigInteger a = BigInteger.valueOf(3344556677L);
@@ -45,7 +47,9 @@ public class copia2 {
     static double NextRandom() {
         previous = (a.multiply(previous).add(c)).mod(M);
         double result = previous.doubleValue() / M.doubleValue();
-        System.out.println("random - " + result);
+        if (logs) {
+            System.out.println("random - " + result);
+        }
         if (count > 0) {
             try {
                 writer.write("- " + result + "\n");
@@ -62,13 +66,17 @@ public class copia2 {
 
     static double tempoChegada(int indice) {
         fila f = filas.get(indice);
-        System.out.println("tempoChegada:");
+        if (logs) {
+            System.out.println("tempoChegada:");
+        }
         return f.getMinArrival() + (f.getMaxArrival() - f.getMinArrival()) * NextRandom();
     }
 
     static double tempoAtendimento(int indice) {
         fila f = filas.get(indice);
-        System.out.println("tempoAtendimento:");
+        if (logs) {
+            System.out.println("tempoAtendimento:");
+        }
         return f.getMinService() + (f.getMaxService() - f.getMinService()) * NextRandom();
     }
 
@@ -78,7 +86,9 @@ public class copia2 {
         int destino = selecionarDestino(indiceFilaOrigem);
         double tempoAtend = TempoGlobal + tempoAtendimento(indiceFilaOrigem);
 
-        System.out.println("Destino selecionado: " + destino);
+        if (logs) {
+            System.out.println("Destino selecionado: " + destino);
+        }
 
         if (destino == -1) {
             // Saída do sistema
@@ -94,13 +104,16 @@ public class copia2 {
         double[] probs = f.getProbs();
         int[] destinos = f.getDestinos();
 
-        System.out.println("selecionarDestino:");
+        if (logs) {
+            System.out.println("selecionarDestino:");
+        }
         double randomValue = NextRandom();
         double sum = 0.0;
 
         for (int i = 0; i < probs.length; i++) {
             sum += probs[i];
-            System.out.println("Comparando " + randomValue + " com " + sum);
+            if (logs)
+                System.out.println("Comparando " + randomValue + " com " + sum);
             if (randomValue <= sum) {
                 return destinos[i];
             }
@@ -113,26 +126,22 @@ public class copia2 {
     // ------------------------------------------------
 
     static void CHEGADA(Evento evento) {
-        System.out.println("chegada");
+        if (logs) {
+            System.out.println("chegada");
+        }
         TempoGlobal = evento.tempo;
         atualizaEstatisticas();
 
         fila origem = filas.get(evento.filaDestino);
         if (origem.Status() < origem.Capacity()) {
             origem.In();
+            if (logs) {
+                System.out.println("fila " + (evento.filaDestino + 1) + " ++");
+            }
 
             // Agendar próximo atendimento apenas se houver servidores disponíveis
             if (origem.Status() <= origem.Server()) {
-                //agendarProximoAtendimento(evento.filaDestino);
-                int destino = selecionarDestino(evento.filaDestino);
-                double tempoAtend = TempoGlobal + tempoAtendimento(evento.filaDestino);
-                if (destino == -1) {
-                    // Saída do sistema
-                    esc.add(new Evento(Evento.EventType.TIPO_SAIDA, tempoAtend, evento.filaDestino, -1));
-                } else {
-                    // Passagem para outra fila
-                    esc.add(new Evento(Evento.EventType.TIPO_PASSAGEM, tempoAtend, evento.filaDestino, destino));
-                }
+                agendarProximoAtendimento(evento.filaDestino);
             }
         } else {
             origem.Loss();
@@ -142,30 +151,33 @@ public class copia2 {
     }
 
     static void SAIDA(Evento evento) {
-        System.out.println("saida");
+        if (logs) {
+            System.out.println("saida");
+        }
         TempoGlobal = evento.tempo;
         atualizaEstatisticas();
 
         fila origem = filas.get(evento.filaOrigem);
         origem.Out();
+        if (logs) {
+            System.out.println("fila " + (evento.filaOrigem + 1) + " --");
+        }
 
         // Agendar próximo atendimento se ainda há clientes esperando
         if (origem.Status() >= origem.Server()) {
-            //agendarProximoAtendimento(evento.filaOrigem);
-            int destino = selecionarDestino(evento.filaOrigem);
-            double tempoAtend = TempoGlobal + tempoAtendimento(evento.filaOrigem);
-            if (destino == -1) {
-                // Saída do sistema
-                esc.add(new Evento(Evento.EventType.TIPO_SAIDA, tempoAtend, evento.filaOrigem, -1));
+            if (origem.getProbs().length == 1 && origem.getProbs()[0] == 1.0 && origem.getDestinos()[0] == -1) {
+                saida = TempoGlobal + tempoAtendimento(evento.filaOrigem);
+                esc.add(new Evento(Evento.EventType.TIPO_SAIDA, saida, evento.filaOrigem, -1));
             } else {
-                // Passagem para outra fila
-                esc.add(new Evento(Evento.EventType.TIPO_PASSAGEM, tempoAtend, evento.filaOrigem, destino));
+                agendarProximoAtendimento(evento.filaOrigem);
             }
         }
     }
 
     static void PASSAGEM(Evento evento) {
-        System.out.println("passagem");
+        if (logs) {
+            System.out.println("passagem");
+        }
         TempoGlobal = evento.tempo;
         atualizaEstatisticas();
 
@@ -173,36 +185,29 @@ public class copia2 {
         fila destino = filas.get(evento.filaDestino);
 
         origem.Out();
+        if (logs) {
+            System.out.println("fila " + (evento.filaOrigem + 1) + " --");
+        }
 
         // Agendar próximo atendimento se ainda há clientes esperando na origem
         if (origem.Status() >= origem.Server()) {
-            //agendarProximoAtendimento(evento.filaOrigem);
-            int proxDestino = selecionarDestino(evento.filaOrigem);
-            double tempoAtend = TempoGlobal + tempoAtendimento(evento.filaOrigem);
-            if (proxDestino == -1) {
-                // Saída do sistema
-                esc.add(new Evento(Evento.EventType.TIPO_SAIDA, tempoAtend, evento.filaOrigem, -1));
-            } else {
-                // Passagem para outra fila
-                esc.add(new Evento(Evento.EventType.TIPO_PASSAGEM, tempoAtend, evento.filaOrigem, proxDestino));
-            }
+            agendarProximoAtendimento(evento.filaOrigem);
         }
 
         if (destino.Status() < destino.Capacity()) {
             destino.In();
-
+            if (logs) {
+                System.out.println("fila " + (evento.filaDestino + 1) + " ++");
+            }
             // Agendar próximo atendimento apenas se houver servidores disponíveis no
             // destino
+
             if (destino.Status() <= destino.Server()) {
-                //agendarProximoAtendimento(evento.filaDestino);
-                double tempoAtend = TempoGlobal + tempoAtendimento(evento.filaDestino);
-                int proxDestino = selecionarDestino(evento.filaDestino);
-                if (proxDestino == -1) {
-                    // Saída do sistema
-                    esc.add(new Evento(Evento.EventType.TIPO_SAIDA, tempoAtend, evento.filaDestino, -1));
+                if (destino.getProbs().length == 1 && destino.getProbs()[0] == 1.0 && destino.getDestinos()[0] == -1) {
+                    saida = TempoGlobal + tempoAtendimento(evento.filaDestino);
+                    esc.add(new Evento(Evento.EventType.TIPO_SAIDA, saida, evento.filaDestino, -1));
                 } else {
-                    // Passagem para outra fila
-                    esc.add(new Evento(Evento.EventType.TIPO_PASSAGEM, tempoAtend, evento.filaDestino, proxDestino));
+                    agendarProximoAtendimento(evento.filaDestino);
                 }
             }
         } else {
@@ -251,13 +256,26 @@ public class copia2 {
          * }
          */
 
-        System.out.println("Configurando fila 1 (G/G/2/5) chegadas entre 2..3 e atendimento entre 4..7");
-        fila fila1 = new fila(2, 4, 2.0, 3.0, 4.0, 7.0, new double[] { 0.7, 0.3 }, new int[] { 1, -1 });
-        System.out.println("Configurando fila 2 (G/G/1) atendimento entre 4..8");
-        fila fila2 = new fila(1, 1000000, 0.0, 0.0, 4.0, 8.0, new double[] { 1.0 }, new int[] { -1 });
+        // System.out.println("Configurando fila 1 (G/G/2/5) chegadas entre 2..3 e
+        // atendimento entre 4..7");
+        // fila fila1 = new fila(2, 4, 2.0, 3.0, 4.0, 7.0, new double[] { 0.7, 0.3 },
+        // new int[] { 1, -1 });
+        // System.out.println("Configurando fila 2 (G/G/1) atendimento entre 4..8");
+        // fila fila2 = new fila(1, 1000000, 0.0, 0.0, 4.0, 8.0, new double[] { 1.0 },
+        // new int[] { -1 });
+
+        System.out.println("Configurando fila 1 (G/G/1) chegadas entre 2..4 e atendimento entre 1..2");
+        fila fila1 = new fila(1, 1000000, 2.0, 4.0, 1.0, 2.0, new double[] { 0.2, 0.8 }, new int[] { 2, 1 });
+        System.out.println("Configurando fila 2 (G/G/2/5) atendimento entre 4..6");
+        fila fila2 = new fila(2, 5, 0.0, 0.0, 4.0, 6.0, new double[] { 0.3, 0.5, 0.2 }, new int[] { 0, 1, -1 });
+        // fila fila2 = new fila(2, 5, 0.0, 0.0, 4.0, 6.0, new double[] { 0.5, 0.3, 0.2
+        // }, new int[] { 1, 0, -1 });
+        System.out.println("Configurando fila 3 (G/G/2/10) atendimento entre 5..15");
+        fila fila3 = new fila(2, 10, 0.0, 0.0, 5.0, 15.0, new double[] { 0.7, 0.3 }, new int[] { 2, -1 });
 
         filas.add(fila1);
         filas.add(fila2);
+        filas.add(fila3);
 
         temposAnteriores = new double[filas.size()];
         for (int i = 0; i < temposAnteriores.length; i++) {
@@ -296,10 +314,12 @@ public class copia2 {
         System.out.println("Primeira chegada agendada para t=2.0");
         while (count > 0) {
             evento = esc.prox();
-            System.out.println("\nPróximo evento: " + evento);
-            System.out.println("Estados das filas:");
-            for (int i = 0; i < filas.size(); i++) {
-                System.out.println("Fila " + (i + 1) + ": " + filas.get(i).Status() + " clientes");
+            if (logs) {
+                System.out.println("\nPróximo evento: " + evento);
+                System.out.println("Estados das filas:");
+                for (int i = 0; i < filas.size(); i++) {
+                    System.out.println("Fila " + (i + 1) + ": " + filas.get(i).Status() + " clientes");
+                }
             }
             if (evento.tipo == Evento.EventType.TIPO_CHEGADA) {
                 /* System.out.println("ue"); */

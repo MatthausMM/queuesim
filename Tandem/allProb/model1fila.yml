@@ -1,0 +1,13 @@
+!PARAMETERS
+
+arrivals: 
+   FILA: 2.0
+
+queues: 
+   FILA: 
+      servers: 1
+      capacity: 5
+      minArrival: 2.0
+      maxArrival: 5.0
+      minService: 3.0
+      maxService: 5.0

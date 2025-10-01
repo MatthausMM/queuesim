@@ -1,4 +1,5 @@
 package Tandem;
+
 import java.util.*;
 import java.lang.Math;
 import java.math.BigInteger;
@@ -8,7 +9,7 @@ import java.io.IOException;
 
 public class simuladorTandem {
 
-    static int count = 10;
+    static int count = 20;
 
     static BigInteger previous = BigInteger.valueOf(1337);
     static BigInteger a = BigInteger.valueOf(3344556677L);
@@ -44,6 +45,7 @@ public class simuladorTandem {
     static double NextRandom() {
         previous = (a.multiply(previous).add(c)).mod(M);
         double result = previous.doubleValue() / M.doubleValue();
+        System.out.println("random - " + result);
         try {
             writer.write("- " + result + "\n");
             writer.flush();
@@ -57,64 +59,80 @@ public class simuladorTandem {
     // ------------------------------------------------
 
     static double tempoChegada(fila f) {
+        System.out.println("tempoChegada:");
         return f.getMinArrival() + (f.getMaxArrival() - f.getMinArrival()) * NextRandom();
     }
 
     static double tempoAtendimento(fila f) {
+        System.out.println("tempoAtendimento:");
         return f.getMinService() + (f.getMaxService() - f.getMinService()) * NextRandom();
     }
 
     // ------------------------------------------------
 
     static void CHEGADA(Evento evento) {
-
+        System.out.println("CHEGADA:");
         TempoGlobal = evento.tempo;
         atualizaEstatisticas1();
         atualizaEstatisticas2();
 
         if (fila1.Status() < fila1.Capacity()) {
             fila1.In();
+            System.out.println("fila1 ++");
             if (fila1.Status() <= fila1.Server()) {
                 saida = TempoGlobal + tempoAtendimento(fila1);
+                System.out.println("Agendando passagem para " + saida);
+                System.out.println("tempoAtendimento: " + (saida - TempoGlobal));
                 esc.add(new Evento(Evento.EventType.TIPO_PASSAGEM, saida));
             }
         } else {
             fila1.Loss();
         }
         chegada = TempoGlobal + tempoChegada(fila1);
+        System.out.println("Agendando próxima chegada para " + chegada);
+        System.out.println("tempoChegada: " + (chegada - TempoGlobal));
         esc.add(new Evento(Evento.EventType.TIPO_CHEGADA, chegada));
     }
 
     static void SAIDA(Evento evento) {
-
+        System.out.println("SAIDA:");
         TempoGlobal = evento.tempo;
         atualizaEstatisticas1();
         atualizaEstatisticas2();
 
         fila2.Out();
+        System.out.println("fila2 --");
 
         if (fila2.Status() >= fila2.Server()) {
             saida = TempoGlobal + tempoAtendimento(fila2);
+            System.out.println("Agendando saída para " + saida);
+            System.out.println("tempoAtendimento: " + (saida - TempoGlobal));
             esc.add(new Evento(Evento.EventType.TIPO_SAIDA, saida));
         }
     }
 
     static void PASSAGEM(Evento evento) {
-
+        System.out.println("PASSAGEM:");
         TempoGlobal = evento.tempo;
         atualizaEstatisticas1();
         atualizaEstatisticas2();
 
         fila1.Out();
+        System.out.println("fila1 --");
         if (fila1.Status() >= fila1.Server()) {
             double novaSaida = TempoGlobal + tempoAtendimento(fila1);
+            System.out.println("Agendando passagem para " + novaSaida);
+            System.out.println("tempoAtendimento: " + (novaSaida - TempoGlobal));
             esc.add(new Evento(Evento.EventType.TIPO_PASSAGEM, novaSaida));
         }
 
         if (fila2.Status() < fila2.Capacity()) {
             fila2.In();
+            System.out.println("fila2 ++");
             if (fila2.Status() <= fila2.Server()) {
                 double novaSaida = TempoGlobal + tempoAtendimento(fila2);
+                System.out.println("Agendando saída para " + novaSaida);
+                System.out.println("tempoAtendimento: " + (novaSaida - TempoGlobal));
                 esc.add(new Evento(Evento.EventType.TIPO_SAIDA, novaSaida));
             }
         } else {
@@ -126,7 +144,7 @@ public class simuladorTandem {
 
     static void atualizaEstatisticas1() {
         double delta = TempoGlobal - tempoAnterior1;
-        if (delta > 0 && fila1.Status() >= 0/*  && fila1.Status() <= fila1.Capacity() */) {
+        if (delta > 0 && fila1.Status() >= 0/* && fila1.Status() <= fila1.Capacity() */) {
             fila1.getTimes()[fila1.Status()] += delta;
         }
         tempoAnterior1 = TempoGlobal;
@@ -134,7 +152,7 @@ public class simuladorTandem {
 
     static void atualizaEstatisticas2() {
         double delta = TempoGlobal - tempoAnterior2;
-        if (delta > 0 && fila2.Status() >= 0/*  && fila2.Status() <= fila2.Capacity() */) {
+        if (delta > 0 && fila2.Status() >= 0/* && fila2.Status() <= fila2.Capacity() */) {
             fila2.getTimes()[fila2.Status()] += delta;
         }
         tempoAnterior2 = TempoGlobal;
@@ -197,9 +215,13 @@ public class simuladorTandem {
 
         
         esc.add(new Evento(Evento.EventType.TIPO_CHEGADA, 1.5));
-
+        System.out.println("Primeira chegada em 1.5");
         while (count > 0) {
             evento = esc.prox();
+            System.out.println("\nPróximo evento: " + evento);
+            System.out.println("Estados das filas:");
+            System.out.println("  Fila 1: " + fila1.Status() + " clientes");
+            System.out.println("  Fila 2: " + fila2.Status() + " clientes");
             if (evento.tipo == Evento.EventType.TIPO_CHEGADA) {
                 /* System.out.println("ue"); */
                 CHEGADA(evento);
